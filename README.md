@@ -85,6 +85,19 @@ $ ssh-vm root@openbsd_dev
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed version history.
 
+## ALTERNATE SOLUTIONS
+
+As mentioned to me by other OpenBSD users, some alternate solutions for this
+include:
+
+* Configure aliases in `~/.ssh/config`
+* Add entries in `/etc/hosts`
+
+These are all worth considering before installing yet-another-utility! That
+said, those examples still require keeping additional configurations in sync
+with your `/etc/vm.conf` and also determining the correct IP address(es) in
+the first place.
+
 ## LICENSE
 
 Released under the [MIT license](LICENSE).
