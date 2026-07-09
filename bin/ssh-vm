@@ -60,7 +60,7 @@ _ping_vm_for_id() {
 
 # default to $USER if no '<user>@' included in the VM name/ID
 target_user="${1%%@*}"
-if [ -n "$target_user" ] ; then
+if [ "$target_user" != "$1" ] ; then
   target_vm="${1#*@}"
 else
   target_user="$USER"
