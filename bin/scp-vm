@@ -1,0 +1,135 @@
+#!/bin/sh
+
+# scp-vm - secure file copy to/from virtual machine via local network interface
+#
+# CHANGE LOG:
+#
+# v0.2   - 2026-09-25 - Morgan Aldridge <morgant@makkintosshu.com>
+#                       Initial version.
+#
+# LICENSE:
+#
+# Copyright (c) 2026 Morgan T. Aldridge
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to
+# deal in the Software without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+# sell copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+# IN THE SOFTWARE.
+
+. ./lib/libsshvm
+
+# does the path contain a colon (':')?
+_is_remote_path() {
+  [ -n "$1" ] && [ "${1#*:}" != "$1" ]
+}
+
+_auth_from_remote_path() {
+  printf "%s" "${1%%:*}"
+}
+
+_user_from_remote_path() {
+  _auth="$(_auth_from_remote_path "$1")"
+  _user="${_auth%%@*}"
+  [ "$_user" != "$_auth" ] && printf "%s" "$_user"
+}
+
+_vm_name_from_remote_path() {
+  _auth="$(_auth_from_remote_path "$1")"
+  printf "%s" "${_auth#*@}"
+}
+
+_file_path_from_remote_path() {
+  printf "%s" "${1#*:}"
+}
+
+_test_vm_for_remote_path() {
+  ! _is_remote_path "$1" && _fatal "'$1' is not a remote path!" 2
+
+  _vm="$(_vm_name_from_remote_path "$1")"
+  [ -z "$_vm" ] && _fatal "Unable to parse VM name from remote path '$1'!" 2
+
+  _vm_id="$(_vm_id_for_name "$_vm")"
+  [ -z "$_vm_id" ] && _fatal "No VM found with name or ID '$_vm'!"
+
+  ! _is_vm_running "$_vm" \
+    && _fatal "VM '$_vm' is confugured, but not running!"
+
+  ! _ping_vm_for_id "$_vm_id" && _fatal "Unable to ping VM with ID '$_vm_id'!"
+}
+
+_rewrite_vm_remote_path() {
+  ! _is_remote_path "$1" && return
+
+  # parse username, VM name, and file path
+  _user="$(_user_from_remote_path "$1")"
+  _vm="$(_vm_name_from_remote_path "$1")"
+  _path="$(_file_path_from_remote_path "$1")"
+  [ -z "$_vm" ] && return
+
+  # default to $USER if no '<user>@' included in the auth info
+  [ -z "$_user" ] && _user="$USER"
+
+  # translate VM name/ID to IP address
+  _vm_id="$(_vm_id_for_name)"
+  [ -z "$_vm_id" ] && return
+  _vm_ip="$(_vm_ip_for_id "$_vm_id")"
+  [ -z "$_vm_ip" ] && return
+  
+  printf "%s@%s:%s" \
+    "$_user" \
+    "$_vm_ip" \
+    "$_path"
+}
+
+# require both source and target (destination) arguments
+[ $# -lt 2 ] && _fatal "incorrect number of arguments!" 2
+src="$1"
+dst="$2"
+[ -z "$src" ] && _fatal "source argument cannot be empty!" 2
+[ -z "$dst" ] && _fatal "target argument cannot be empty!" 2
+
+# require either source or destination argument to contain a VM name or
+# numerical ID, not both (yet?)
+remote_src=false
+remote_dst=false
+_is_remote_path "$src" && remote_src=true
+_is_remote_path "$dst" && remote_dst=true
+! $remote_src && ! $remote_dst \
+  && _fatal "one argument must contain a VM ID or name!" 2
+$remote_src && $remote_dst \
+  && _fatal "source & target arguments cannot both contain a VM name or ID!" 2
+
+# vmd must be running
+! rcctl -q check vmd && _fatal "vmd is not running!"
+
+# rewrite the remote path, plus confirm VM is running & pingable
+if $remote_src ; then
+  _test_vm_for_remote_path "$src"
+  original_src="$src"
+  src="$(_rewrite_vm_remote_path "$original_src")"
+  { [ -z "$src" ] || [ "$src" = "$original_src" ]; } \
+    && _fatal "Failed to rewrite source path '$original_src' for VM!"
+fi
+if $remote_dst ; then
+  _test_vm_for_remote_path "$dst"
+  original_dst="$dst"
+  dst="$(_rewrite_vm_remote_path "$original_dst")"
+  { [ -z "$dst" ] || [ "$dst" = "$original_dst" ]; } \
+    && _fatal "Failed to rewrite target path '$original_dst' for VM!"
+fi
+
+# initiate the scp transfer
+exec scp "$src" "$dst"

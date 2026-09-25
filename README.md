@@ -3,23 +3,27 @@ by Morgan Aldridge <morgant@makkintosshu.com>
 
 ## OVERVIEW
 
-`ssh-vm` is a wrapper for the OpenSSH remote login client ([ssh(1)](https://man.openbsd.org/ssh))
-which streamlines connecting to guest VMs running under OpenBSD's [VMM
-(virtual machine monitor)](https://man.openbsd.org/vmm) via 
-[tap(4)](https://man.openbsd.org/tap)/[vio(4)](https://man.openbsd.org/vio)
+This project contains wrappers for the OpenSSH remote login client
+([ssh(1)](https://man.openbsd.org/ssh)) and secure file copy
+([scp(1)](https://man.openbsd.org/scp)) commands (`ssh-vm` and `scp-vm`,
+respectively) which streamline connecting and copying files to/from guest VMs
+running under OpenBSD's [VMM (virtual machine monitor)](https://man.openbsd.org/vmm)
+via [tap(4)](https://man.openbsd.org/tap)/[vio(4)](https://man.openbsd.org/vio)
 local interfaces. See the [LOCAL INTERFACES](https://man.openbsd.org/vmctl#LOCAL_INTERFACES)
 section of [vmctl(8)](https://man.openbsd.org/vmctl) for further details as to
 how vmd(8) allocates and assigns IP addresses in the 100.64.0.0/10 range.
 
 ## FEATURES
 
-* Identify VM to connect to by either name or numerical ID (as shown in
-vmctl(8))
-* Optionally, specify a user to connect as using the `[user@]virtualmachine`
-    syntax
+Both `ssh-vm` and `scp-vm` support:
 
-**IMPORTANT:** _It does not yet support passing additional options and/or
-parameters to ssh(1)!_
+* Identify VM to connect to by either name or numerical ID (as shown in
+    vmctl(8))
+* Optionally, specify a user to connect as (using the `[user@]virtualmachine`
+    syntax)
+
+**IMPORTANT:** _They do not yet support passing additional options and/or
+parameters to ssh(1)/scp(1)!_
 
 ## INSTALLATION & REMOVAL
 
@@ -79,6 +83,20 @@ disabled by default in OpenBSD, so this would be expected to fail_):
 
 ```
 $ ssh-vm root@openbsd_dev
+```
+
+To copy a local file to the home folder of a user with your same username on a
+VM named `openbsd_dev`:
+
+```
+$ scp-vm README.md openbsd_dev:'~/'
+```
+
+To copy the file back from the home folder on the VM named `openbsd_dev` to
+your local `~/Downloads/` folder:
+
+```
+$ scp-vm openbsd_dev:'~/README.md' ~/Downloads/
 ```
 
 ## CHANGE LOG

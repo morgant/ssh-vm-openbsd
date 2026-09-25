@@ -1,0 +1,72 @@
+#!/bin/sh
+
+# libsshvm - functions for working connecting to virtual machines by name
+#
+# CHANGE LOG:
+#
+# v0.2   - 2026-09-25 - Morgan Aldridge <morgant@makkintosshu.com>
+#                       Initial version. _fatal(), _vm_subnet_for_id(),
+#                       _vm_ip_for_id(), and _ping_vm_for_id() split out from
+#                       ssh-vm, plus new _vm_id_for_name() & _is_vm_running()
+#                       functions.
+#
+# LICENSE:
+#
+# Copyright (c) 2026 Morgan T. Aldridge
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to
+# deal in the Software without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+# sell copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+# IN THE SOFTWARE.
+
+# defaults
+tap_vm_subnet="100.64"  # see vmctl(8), esp. the "LOCAL INTERFACES" section
+tap_vm_guest_offset=3
+
+_fatal() {
+  printf "%s: %s Exiting.\n" "$(basename "$0")" "$1" >&2
+  exit $2
+}
+
+_vm_id_for_name() {
+  _status="$(vmctl status "$1" | head -n 2 | tail -n 1)"
+  _id="$(echo "$_status" | awk '{ print $1 }')"
+  [ -n "$_id" ] && [ "$_id" != "ID" ] \
+    && printf "%i" "$_id"
+}
+
+_is_vm_running() {
+  _status="$(vmctl status -r "$1" | head -n 2 | tail -n 1)"
+  _id="$(echo "$_status" | awk '{ print $1 }')"
+  [ -n "$_id" ] && [ "$_id" != "ID" ]
+}
+
+_vm_subnet_for_id() {
+  printf "%s.%i" "$tap_vm_subnet" "$1"
+}
+
+_vm_ip_for_id() {
+  _if_num="${2:-0}"
+  printf "%s.%i" \
+    "$(_vm_subnet_for_id "$1")" \
+    "$(( _if_num + tap_vm_guest_offset ))"
+}
+
+_ping_vm_for_id() {
+  _if_num="${2:-0}"
+  _if_ip="$(_vm_ip_for_id "$1" "$_if_num")"
+  ping -qc 1 "$_if_ip" >/dev/null
+}
