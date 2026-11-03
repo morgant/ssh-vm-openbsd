@@ -1,0 +1,49 @@
+#!/bin/sh
+
+# ping-vm - ping virtual machine via local network interface
+#
+# CHANGE LOG:
+#
+# v0.3   - 2026-11-03 - Morgan Aldridge <morgant@makkintosshu.com>
+#                       Initial version.
+#
+# LICENSE:
+#
+# Copyright (c) 2026 Morgan T. Aldridge
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to
+# deal in the Software without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+# sell copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+# IN THE SOFTWARE.
+
+. ./lib/libsshvm
+
+# require an argument containing a VM name or numerical ID
+[ -z "$1" ] && _fatal "VM name or ID required!" 2
+target_vm="$1"
+
+# vmd must be running
+! rcctl -q check vmd && _fatal "vmd is not running!"
+
+# require a running VM with a matching & valid name or numerical ID
+vm_id="$(_vm_id_for_name "$target_vm")"
+[ -z "$vm_id" ] && _fatal "No VM found with name or ID '${target_vm}'!" 2
+
+! _is_vm_running "$target_vm" \
+  && _fatal "VM '${target_vm}' does not appear to be running!"
+
+# initiate ping of the VM guest tap(4) interface
+exec ping "$(_vm_ip_for_id "$vm_id")"

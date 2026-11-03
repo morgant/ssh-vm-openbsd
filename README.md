@@ -6,19 +6,31 @@ by Morgan Aldridge <morgant@makkintosshu.com>
 This project contains wrappers for the OpenSSH remote login client
 ([ssh(1)](https://man.openbsd.org/ssh)) and secure file copy
 ([scp(1)](https://man.openbsd.org/scp)) commands (`ssh-vm` and `scp-vm`,
-respectively) which streamline connecting and copying files to/from guest VMs
-running under OpenBSD's [VMM (virtual machine monitor)](https://man.openbsd.org/vmm)
+respectively), among others, which streamline connecting and copying files
+to/from guest VMs running under OpenBSD's [VMM (virtual machine monitor)](https://man.openbsd.org/vmm)
 via [tap(4)](https://man.openbsd.org/tap)/[vio(4)](https://man.openbsd.org/vio)
-local interfaces. See the [LOCAL INTERFACES](https://man.openbsd.org/vmctl#LOCAL_INTERFACES)
+local interfaces.
+
+Wrapper utilities include:
+
+* `ping-vm` ([ping(8)](https://man.openbsd.org/ping))
+* `scp-vm` (ssh(1))
+* `ssh-vm` (for scp(1))
+* `traceroute-vm` ([traceroute(8)](https://man.openbsd.org/traceroute))
+
+See the [LOCAL INTERFACES](https://man.openbsd.org/vmctl#LOCAL_INTERFACES)
 section of [vmctl(8)](https://man.openbsd.org/vmctl) for further details as to
 how vmd(8) allocates and assigns IP addresses in the 100.64.0.0/10 range.
 
 ## FEATURES
 
-Both `ssh-vm` and `scp-vm` support:
+`ping-vm`, `scp-vm`, `ssh-vm`, and `traceroute-vm` all support:
 
 * Identify VM to connect to by either name or numerical ID (as shown in
     vmctl(8))
+
+Both `ssh-vm` and `scp-vm` also support:
+
 * Optionally, specify a user to connect as (using the `[user@]virtualmachine`
     syntax)
 

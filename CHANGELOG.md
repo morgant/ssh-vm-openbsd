@@ -7,7 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_n/a_
+### Added
+
+* `ping-vm`:
+    * Supports pinging vmm(4) virtual machines (VMs) via ping(8) by
+        referencing a VM name or numerical ID (as shown in vmctl(8))
+* `traceroute-vm`:
+    * Supports tracing packet path to vmm(4) virtual machines (VMs) via
+        traceroute(8) by referencing a VM name or numerical ID (as shown in
+        vmctl(8))
+
+### Updated
+
+* `Makefile`:
+    * Updated `install` & `uninstall` targets to support new `bin/ping-vm`
+        and `bin/traceroute-vm` files
+* `README.md` & `CHANGELOG.md`:
+    * Noted new `ping-vm` & `traceroute-vm` utilities
 
 ## [0.2.0] - 2026-09-25
 
