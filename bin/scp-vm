@@ -6,6 +6,9 @@
 #
 # v0.2   - 2026-09-25 - Morgan Aldridge <morgant@makkintosshu.com>
 #                       Initial version.
+# v0.?.? - 2026-11-24 - Morgan Aldridge
+#                       Fixed bug converting VM name to ID, which resulted in
+#                       all operations being performed on the 1st VM.
 #
 # LICENSE:
 #
@@ -83,7 +86,7 @@ _rewrite_vm_remote_path() {
   [ -z "$_user" ] && _user="$USER"
 
   # translate VM name/ID to IP address
-  _vm_id="$(_vm_id_for_name)"
+  _vm_id="$(_vm_id_for_name "$_vm")"
   [ -z "$_vm_id" ] && return
   _vm_ip="$(_vm_ip_for_id "$_vm_id")"
   [ -z "$_vm_ip" ] && return

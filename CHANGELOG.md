@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
         traceroute(8) by referencing a VM name or numerical ID (as shown in
         vmctl(8))
 
+### Fixed
+
+* `scp-vm`:
+    * Fixed bug translating VM name to ID which resulted in all operations
+        being performed on 1st VM
+
 ### Updated
 
 * `Makefile`:
